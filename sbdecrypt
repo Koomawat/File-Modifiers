@@ -1,0 +1,131 @@
+#!/usr/bin/python3
+import binascii
+import sys
+import os
+
+# hk709 - Harsh Kumawat
+
+# seed function, take in password, return hash/seed value
+def seedfunc(password: str):
+        
+        hash = 0    
+        for char in password:
+            hash = ord(char) + (hash << 6) + (hash << 16) - hash
+
+        return hash
+
+# returns 16 keystream values based on the seed
+def lcg(seed):
+    m = 256
+    a = 1103515245
+    c = 12345
+
+    byteList = []
+
+    for i in range(16):
+
+        val = ((a*seed)+c) % m
+        seed = val
+        byteList.append(val)
+
+    return byteList
+
+# block shuffle based on the keystream
+def shuffle(block, keystream):
+    newblock = block
+
+    for i in reversed(range(16)):
+        first = keystream[i] & 0xf
+        second = (keystream[i] >> 4) & 0xf
+        newblock[second],newblock[first] = newblock[first],newblock[second] 
+    
+    return newblock
+
+# if numbers of args is not 4, usage error
+if (len(sys.argv) != 4): 
+
+    print('Usage: ./sbdecrypt password ciphertext plaintext')
+
+else:
+
+    # taking in arg values
+    passw = sys.argv[1]
+    plaintext = sys.argv[2]
+    outname = sys.argv[3]
+
+    # outputting to file based on provided name
+    outputting = open(outname, "ab")
+    outputting.truncate(0)
+
+    # file exception check
+    try:
+        text = open(plaintext, "rb") 
+    except:
+        print("cannot open plaintext file for reading:",plaintext)
+        sys.exit(1)
+
+    if len(passw) == 0:
+        print("warning: empty password")
+        seedval = seedfunc(passw)
+
+    # getting seed
+    seedval = seedfunc(passw)
+    print("using seed="+str(seedval)+" from password="+passw)
+
+    # getting first keystream values
+    stream = lcg(seedval)
+    oldkeys = stream
+
+    firstblock = True
+    eofreached = False
+
+    # while not end of file based on blocks
+    while eofreached != True: 
+
+        # reading in first 16 bytes of ciphertext
+        currCipherBlock = [None] * 16
+
+        for i in range(16):
+            currByte = text.read(1)
+            valTex = int.from_bytes(currByte,byteorder='little')
+            currCipherBlock[i] = (valTex)
+
+        # old block copy for next block
+        oldBlockCopy = currCipherBlock
+
+        # xor of shuffled block with the keystream
+        cipherKeys = lcg(oldkeys[15])
+        unxorBlock = list(a^b for a,b in zip(cipherKeys,currCipherBlock))
+        unshuffled = shuffle(unxorBlock, cipherKeys)
+
+        # xor of unshuffled stream with the iv/previous keystream
+        writing = list(a^b for a,b in zip(unshuffled,stream))
+
+        # getting output byte values
+        for i in range(16):
+                newbyte = str(hex(writing[i]))
+                newbyte = newbyte[2:]
+                if len(newbyte) == 1:
+                    newbyte = '0'+newbyte
+                outputting.write(binascii.unhexlify(newbyte))
+
+        stream = oldBlockCopy
+        oldkeys = cipherKeys
+
+        currIndex = text.tell()
+        nextByte = text.read(1)
+        fullPad = False
+
+        # removing pad if at end of file
+        if nextByte == b'':
+            eofreached = True
+            bytesToRemove = writing[15]
+            
+            for i in range(bytesToRemove):
+                outputting.seek(-1, os.SEEK_END)
+                outputting.truncate()
+
+        else:
+            text.seek(currIndex)
+
+    

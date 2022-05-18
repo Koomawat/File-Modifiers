@@ -1,0 +1,134 @@
+#!/usr/bin/python3
+import sys
+import hashlib
+import time
+
+def leadZeros(hashval):
+    zeros = 0
+
+    for i in range(len(hashval)):
+        if hashval[i] == '0':
+            zeros += 4
+        else:
+            last = "{0:04b}".format(int(hashval[i],16))
+            zeros += int(str(last).index('1'))
+            break
+    
+    return zeros
+
+
+if (len(sys.argv) != 3): 
+
+    print('Usage: ./pow-check header file')
+
+else:
+
+    headerfile = sys.argv[1]
+    filename = sys.argv[2]
+
+    try:
+        filetemp = open(filename, "rb") 
+    except:
+        print("Error: could not find/open file " + filename)
+        sys.exit(1)
+
+    with open(filename, "rb") as f:
+        byte = f.read()
+        fileHash = hashlib.sha256(byte).hexdigest()
+
+    try:
+        filetemp2 = open(headerfile, "r") 
+    except:
+        print("Error: could not find/open header file " + headerfile)
+        sys.exit(1)
+
+    with open(filename, "rb") as f:
+        byte = f.read()
+        fileHash = hashlib.sha256(byte).hexdigest()
+
+    #print(fileHash)
+
+    header = open(headerfile, 'r')
+    Lines = header.readlines()
+
+    lineCount = 0
+
+    matchingHashes = False
+    leadingBits = False
+    powHashHeader = False
+    headerPow = ''
+    leadZeroHeader = ''
+    hashHeader = ''
+    iniHashHeader = ''
+    newPowHash = ''
+
+    for line in Lines:
+
+        currLine = line.strip()
+        splitLine = currLine.split(':')
+
+        if (splitLine[0].strip() == 'Initial-hash'):
+            iniHashHeader = splitLine[1].strip()
+            if splitLine[1].strip() == str(fileHash):
+                matchingHashes = True
+
+        if (splitLine[0].strip() == 'Proof-of-work'):
+            headerPow = splitLine[1].strip()
+
+            newHash = str(fileHash) + headerPow
+            h = hashlib.sha256()
+            h.update(bytes(newHash, encoding = 'ascii'))
+            hashvalue = h.hexdigest()
+            newPowHash = str(hashvalue)
+            zerocount = leadZeros(str(hashvalue))
+
+        if (splitLine[0].strip() == 'Hash'):
+            hashHeader = splitLine[1].strip()
+            if newPowHash == hashHeader:
+                powHashHeader = True
+
+        if (splitLine[0].strip() == 'Leading-zero-bits'):
+            leadZeroHeader = str(splitLine[1].strip())
+            if str(zerocount) == leadZeroHeader:
+                leadingBits = True
+
+    missinigIni = False
+    missingBits = False
+    missingPow = False
+
+    if matchingHashes == True:
+        print('PASSED: initial file hashes match')
+    elif iniHashHeader == "":
+        print('ERROR: missing Initial-hash in header')
+        missinigIni = True
+    else:
+        print("ERROR: initial hashes don't match")
+        print("       hash in header: "+iniHashHeader)
+        print("       file hash: "+fileHash)
+
+    if leadingBits == True:
+        print("PASSED: leading bits is correct")
+    elif leadZeroHeader == '':
+        print('ERROR: missing Leading-zero-bits in header')
+        missingBits = True
+    elif headerPow == '':
+        print('ERROR: missing Proof-of-work in header')
+    else:
+        print("ERROR: Leading-zero-bits value: " + str(leadZeroHeader) 
+         + ", but hash has " + str(zerocount) + " leading zero bits")
+
+    if powHashHeader == True:
+        print("PASSED: pow hash matches Hash header")
+    elif hashHeader == '':
+        print('ERROR: missing Hash in header')
+    elif headerPow == '':
+        print('ERROR: missing Proof-of-work in header, cannot verify Hash header')
+    else:
+        print("ERROR: pow hash does not match Hash header")
+        print("       expected: "+newPowHash)
+        print("       header has: "+hashHeader)
+
+    if (matchingHashes and leadingBits and powHashHeader):
+        print('pass')
+    else:
+        print('fail')

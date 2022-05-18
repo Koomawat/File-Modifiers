@@ -1,0 +1,78 @@
+#!/usr/bin/python3
+import binascii
+import sys
+
+# hk709 - Harsh Kumawat
+
+#command line: ./scrypt password plaintext ciphertext
+#command line: ./scrypt password ciphertext plaintext
+
+def seedfunc(password: str):
+        
+        hash = 0    
+        for char in password:
+            hash = ord(char) + (hash << 6) + (hash << 16) - hash
+
+        return hash
+
+
+def lcg(seed):
+    m = 256
+    a = 1103515245
+    c = 12345
+
+    val = ((a*seed)+c) % m
+    return val
+
+
+if (len(sys.argv) != 4): 
+
+    print('Usage: ./scrypt password plaintext ciphertext')
+    print('OR ./scrypt password chiphertext plaintext')
+
+else:
+
+    passw = sys.argv[1]
+    plaintext = sys.argv[2]
+    outname = sys.argv[3]
+
+    try:
+        text = open(plaintext, "rb") 
+    except:
+        print("cannot open plaintext file for reading:",plaintext)
+        sys.exit(1)
+
+    if len(passw) == 0:
+        print("warning: empty password")
+        seedval = seedfunc(passw)
+
+
+    seedval = seedfunc(passw)
+    print("using seed="+str(seedval)+" from password="+passw)
+
+    
+    with open(outname, "ab") as f:
+
+        f.truncate(0)
+
+        numseed = seedfunc(passw)
+        currByte = text.read(1)
+
+        while currByte != b"":
+
+            streamByte = lcg(numseed)
+            valTex = int.from_bytes(currByte,byteorder='little')
+
+            valnewbyte = valTex ^ streamByte
+
+            newbyte = str(hex(valnewbyte))
+            newbyte = newbyte[2:]
+
+            if len(newbyte) == 1:
+                newbyte = '0'+newbyte
+
+            f.write(binascii.unhexlify(newbyte))
+
+            numseed = streamByte
+
+            currByte = text.read(1)

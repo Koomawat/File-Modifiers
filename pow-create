@@ -1,0 +1,215 @@
+#!/usr/bin/python3 
+import sys
+import hashlib
+import time
+
+def header(filename, iniHash, proof, newhash, leadzeros, iterations, computeTime):
+
+    print('Filename: '+filename)
+    print('Initial-hash: '+iniHash)
+    print('Proof-of-work: '+proof)
+    print('Hash: '+newhash)
+    print('Leading-zero-bits: '+leadzeros)
+    print('Iterations: '+iterations)
+    print('Compute-time: '+computeTime)
+
+    sys.exit(1)
+    return
+
+
+def leadZeros(hashval):
+    zeros = 0
+
+    for i in range(len(hashval)):
+        if hashval[i] == '0':
+            zeros += 4
+        else:
+            last = "{0:04b}".format(int(hashval[i],16))
+            zeros += int(str(last).index('1'))
+            break
+    
+    return zeros
+
+
+if (len(sys.argv) != 3): 
+
+    print('Usage: ./pow-create nbits file')
+
+else:
+
+    start = time.time()
+
+    bits = sys.argv[1]
+
+    if str(bits).isnumeric() == False:
+        print('Error: bits must be a number 0 or greater')
+        sys.exit(1)
+
+    filename = sys.argv[2]
+    
+    try:
+        filetemp = open(filename, "rb") 
+    except:
+        print("Error: could not open file")
+        sys.exit(1)
+
+    with open(filename, "rb") as f:
+        byte = f.read()
+        fileHash = hashlib.sha256(byte).hexdigest()
+
+    fileHashStr = str(fileHash)
+
+    hashFound = False
+
+    iterations = 0
+
+    while hashFound == False:
+    
+        for i in range(33, 127):
+            if i != 34 and i != 39:
+                poW = chr(i)
+                iterations += 1
+                newHash = fileHashStr + poW
+
+                h = hashlib.sha256()
+                h.update(bytes(newHash, encoding = 'ascii'))
+                hashvalue = h.hexdigest()
+
+                numzero = leadZeros(hashvalue)
+                if (numzero >= int(bits)):
+                    end = time.time()
+                    totaltime = end - start
+                    header(filename, fileHashStr, poW, str(hashvalue), str(numzero), str(iterations), str(totaltime))
+                    sys.exit(1)
+
+
+        for i in range(33, 127):
+            if i != 34 and i != 39:
+
+                for j in range(33, 127):
+                    if j != 34 and j != 39:
+                        poW = chr(i) + chr(j)
+                        iterations += 1
+                        newHash = fileHashStr + poW
+
+                        h = hashlib.sha256()
+                        h.update(bytes(newHash, encoding = 'ascii'))
+                        hashvalue = h.hexdigest()
+
+                        numzero = leadZeros(hashvalue)
+                        if (numzero >= int(bits)):
+                            end = time.time()
+                            totaltime = end - start
+                            header(filename, fileHashStr, poW, str(hashvalue), str(numzero), str(iterations), str(totaltime))
+                            sys.exit(1)
+    
+
+        for i in range(33, 127):
+            if i != 34 and i != 39:
+
+                for j in range(33, 127):
+                    if j != 34 and j != 39:
+
+                        for k in range(33, 127):
+                            if k != 34 and k != 39:
+                                poW = chr(i) + chr(j) + chr(k)
+                                iterations += 1
+                                newHash = fileHashStr + poW
+
+                                h = hashlib.sha256()
+                                h.update(bytes(newHash, encoding = 'ascii'))
+                                hashvalue = h.hexdigest()
+
+                                numzero = leadZeros(hashvalue)
+                                if (numzero >= int(bits)):
+                                    end = time.time()
+                                    totaltime = end - start
+                                    header(filename, fileHashStr, poW, str(hashvalue), str(numzero), str(iterations), str(totaltime))
+                                    sys.exit(1)
+
+        for i in range(33, 127):
+            if i != 34 and i != 39:
+
+                for j in range(33, 127):
+                    if j != 34 and j != 39:
+
+                        for k in range(33, 127):
+                            if k != 34 and k != 39:
+
+                                for l in range(33, 127):
+                                    if l != 34 and l != 39:
+                                        poW = chr(i) + chr(j) + chr(k) + chr(l)
+                                        iterations += 1
+                                        newHash = fileHashStr + poW
+
+                                        h = hashlib.sha256()
+                                        h.update(bytes(newHash, encoding = 'ascii'))
+                                        hashvalue = h.hexdigest()
+
+                                        numzero = leadZeros(hashvalue)
+                                        if (numzero >= int(bits)):
+                                            end = time.time()
+                                            totaltime = end - start
+                                            header(filename, fileHashStr, poW, str(hashvalue), str(numzero), str(iterations), str(totaltime))
+                                            sys.exit(1)
+
+        for i in range(33, 127):
+            if i != 34 and i != 39:
+
+                for j in range(33, 127):
+                    if j != 34 and j != 39:
+
+                        for k in range(33, 127):
+                            if k != 34 and k != 39:
+
+                                for l in range(33, 127):
+                                    if l != 34 and l != 39:
+
+                                        for m in range(33, 127):
+                                            if m != 34 and m != 39:
+                                                poW = chr(i) + chr(j) + chr(k) + chr(l) + chr(m)
+                                                iterations += 1
+                                                newHash = fileHashStr + poW
+
+                                                h = hashlib.sha256()
+                                                h.update(bytes(newHash, encoding = 'ascii'))
+                                                hashvalue = h.hexdigest()
+
+                                                numzero = leadZeros(hashvalue)
+                                                if (numzero >= int(bits)):
+                                                    end = time.time()
+                                                    totaltime = end - start
+                                                    header(filename, fileHashStr, poW, str(hashvalue), str(numzero), str(iterations), str(totaltime))
+                                                    sys.exit(1)
+
+        for i in range(33, 127):
+            if i != 34 and i != 39:
+
+                for j in range(33, 127):
+                    if j != 34 and j != 39:
+
+                        for k in range(33, 127):
+                            if k != 34 and k != 39:
+
+                                for l in range(33, 127):
+                                    if l != 34 and l != 39:
+
+                                        for m in range(33, 127):
+                                            if m != 34 and m != 39:
+
+                                                for n in range(33, 127):
+                                                    if n != 34 and n != 39:
+                                                        poW = chr(i) + chr(j) + chr(k) + chr(l) + chr(m) + chr(n)
+                                                        iterations += 1
+                                                        newHash = fileHashStr + poW
+
+                                                        h = hashlib.sha256()
+                                                        h.update(bytes(newHash, encoding = 'ascii'))
+                                                        hashvalue = h.hexdigest()
+
+                                                        numzero = leadZeros(hashvalue)
+                                                        if (numzero >= int(bits)):
+                                                            end = time.time()
+                                                            totaltime = end - start
+                                                            header(filename, fileHashStr, poW, str(hashvalue), str(numzero), str(iterations), str(totaltime))
+                                                            sys.exit(1)

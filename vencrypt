@@ -1,0 +1,72 @@
+#!/usr/bin/python3
+import binascii
+import sys
+
+# hk709 - Harsh Kumawat
+
+#command line: ./vencrypt keyfile plaintext ciphertext
+
+if (len(sys.argv) != 4): 
+
+    print('Usage: ./vencrypt keyfile ciphertext plaintext')
+
+else:
+
+    keyfile = str(sys.argv[1])
+    textfile = str(sys.argv[2])
+    out = str(sys.argv[3])
+
+    try:
+        keytemp = open(keyfile, "rb") 
+    except:
+        print("Could not open keyfile")
+        sys.exit(1)
+
+    lenfile = keytemp.read()
+    outp = "keyfile=" + keyfile + ", " + "length=" + str(len(lenfile))
+    print(outp)
+    keytemp.close()
+
+    key = open(keyfile, "rb")  
+
+    try:
+        text = open(textfile, "rb") 
+    except:
+        print("Could not open plaintext")
+        sys.exit(1)
+
+
+    with open(out, "ab") as f:
+
+        f.truncate(0)
+
+        currby = key.read(1)
+        currTex = text.read(1)
+
+        while currTex != b"":
+
+            valTex = int.from_bytes(currTex,byteorder='little')
+            valKey = int.from_bytes(currby,byteorder='little')
+
+            valnewbyte = valTex + valKey
+
+            if (valnewbyte > 255):
+                valnewbyte = (valTex + valKey - 1) % 255
+
+
+            newbyte = str(hex(valnewbyte))
+            newbyte = newbyte[2:]
+
+            if len(newbyte) == 1:
+                newbyte = '0'+newbyte
+
+            f.write(binascii.unhexlify(newbyte))
+
+            currTex = text.read(1)
+            currby = key.read(1)
+            if (currby == b""):
+                key.seek(0)
+                currby = key.read(1)
+
+    key.close()
+    text.close()
